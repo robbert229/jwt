@@ -10,20 +10,13 @@ func TestEncodeAndVerifyToken(t *testing.T) {
 	secret := "secret"
 	signingHash := HmacSha256(secret)
 	
-	
-	var header Header
-	err := json.Unmarshal([]byte(`{"alg": "HS256","typ": "JWT"}`), &header)
+	payload := NewClaim()
+	err := json.Unmarshal([]byte(`{"sub":"1234567890","name":"John Doe","admin":true}`), &payload)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var payload Payload
-	err = json.Unmarshal([]byte(`{"sub":"1234567890","name":"John Doe","admin":true}`), &payload)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	token, err := Encode(signingHash, header, payload)
+	token, err := Encode(signingHash, payload)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,19 +31,13 @@ func TestVerifyToken(t *testing.T) {
 	secret := "secret"
 	signingHash := HmacSha256(secret)
 	
-	var header Header
-	err := json.Unmarshal([]byte(`{"alg": "HS256","typ": "JWT"}`), &header)
+	payload := NewClaim()
+	err := json.Unmarshal([]byte(`{"sub":"1234567890","name":"John Doe","admin":true}`), &payload)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var payload Payload
-	err = json.Unmarshal([]byte(`{"sub":"1234567890","name":"John Doe","admin":true}`), &payload)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	token, err := Encode(signingHash, header, payload)
+	token, err := Encode(signingHash, payload)
 	if err != nil {
 		t.Fatal(err)
 	}

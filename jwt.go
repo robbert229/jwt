@@ -2,45 +2,12 @@
 package jwt
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"crypto/sha512"
-	"hash"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"strings"
 	"time"
 )
-
-//SigningMethod is the algorithm used to sign and validate a token.
-type SigningMethod struct {
-	signingHash hash.Hash
-	algorithm string
-}
-
-// NewHeader returns a new Header object.
-func (method *SigningMethod) NewHeader() *Header{
-	return &Header{
-		Typ: "JWT",
-		Alg: method.algorithm,
-	}
-}
-
-// Sum returns the sum of the hash
-func (method *SigningMethod) Sum(data []byte) []byte {
-	return method.signingHash.Sum(data)
-}
-
-// Reset resets the hash
-func (method *SigningMethod) Reset(){
-	method.signingHash.Reset()
-}
-
-// Write writes the specified bytes to the hash
-func (method *SigningMethod) Write(data []byte) (int, error){
-	return method.signingHash.Write(data)
-}
 
 // Header containins important information for encrypting / decryting
 type Header struct {
@@ -49,51 +16,39 @@ type Header struct {
 	Cty string // Content Type - This claim should always be JWT
 }
 
-
-// Payload contains the claims of the token
-type Payload struct {
-	//Standard Fields
-	Iis string    // Issuer - identifies principal that issued the JWT;
-	Sub string    // Subject - identifies the subject of the JWT;
-	Aud string    // Audience - The "aud" (audience) claim identifies the recipients that the JWT is intended for. Each principal intended to process the JWT MUST identify itself with a value in the audience claim. If the principal processing the claim does not identify itself with a value in the aud claim when this claim is present, then the JWT MUST be rejected.
-	Exp time.Time // Expiration time - The "exp" (expiration time) claim identifies the expiration time on or after which the JWT MUST NOT be accepted for processing.
-	Nbf time.Time // Not before - Similarly, the not-before time claim identifies the time on which the JWT will start to be accepted for processing.
-	Iat time.Time // Issued at - The "iat" (issued at) claim identifies the time at which the JWT was issued.
-	Jti string    // JWT ID - case sensitive unique identifier of the token even among different issuers.
-}
-
-
-//HmacSha256 returns the SingingMethod for HMAC with SHA256
-func HmacSha256(key string) SigningMethod {
-	return SigningMethod{
-		algorithm: "HS256",
-		signingHash: hmac.New(sha256.New, []byte(key)),
-	}
-}
-
-//HmacSha512 returns the SigningMethod for HMAC with SHA512
-func HmacSha512(key string) SigningMethod {
-	return SigningMethod{
-		algorithm: "HS512",
-		signingHash: hmac.New(sha512.New, []byte(key)),
-	}
+// NewClaim returns a new map representing the claims with the default values. The schema is detailed below.
+//		claim["iis"] Issuer - string - identifies principal that issued the JWT;
+//		claim["sub"] Subject - string - identifies the subject of the JWT;
+//		claim["aud"] Audience - string - The "aud" (audience) claim identifies the recipients that the JWT is intended for. Each principal intended to process the JWT MUST identify itself with a value in the audience claim. If the principal processing the claim does not identify itself with a value in the aud claim when this claim is present, then the JWT MUST be rejected.
+//		claim["exp"] Expiration time - time - The "exp" (expiration time) claim identifies the expiration time on or after which the JWT MUST NOT be accepted for processing.
+//		claim["nbf"] Not before - time - Similarly, the not-before time claim identifies the time on which the JWT will start to be accepted for processing.
+//		claim["iat"] Issued at - time - The "iat" (issued at) claim identifies the time at which the JWT was issued.
+//		claim["jti"] JWT ID - string - case sensitive unique identifier of the token even among different issuers.
+func NewClaim() map[string]interface{} {
+	claim := make(map[string]interface{})
+	
+	claim["iat"] = time.Now()
+	
+	return claim
 }
 
 //Sign signs the token with the given hash, and key
-func Sign(signingHash SigningMethod, unsignedToken string) (string, error){
-	_, err := signingHash.Write([]byte(unsignedToken))
+func Sign(algorithm Algorithm, unsignedToken string) (string, error) {
+	_, err := algorithm.Write([]byte(unsignedToken))
 	if err != nil {
 		return "", errors.New("Unable to write to HMAC-SHA256")
 	}
 
-	encodedToken := base64.StdEncoding.EncodeToString(signingHash.Sum(nil))
-	signingHash.Reset()
+	encodedToken := base64.StdEncoding.EncodeToString(algorithm.Sum(nil))
+	algorithm.Reset()
 
 	return encodedToken, nil
 }
 
 // Encode returns an encoded JWT token from a header, payload, and secret
-func Encode(signingHash SigningMethod, header Header, payload Payload) (string, error) {
+func Encode(algorithm Algorithm, payload map[string]interface{}) (string, error) {
+	header := algorithm.NewHeader()
+	
 	jsonTokenHeader, err := json.Marshal(header)
 	if err != nil {
 		return "", errors.New("unable to marshal header")
@@ -110,7 +65,7 @@ func Encode(signingHash SigningMethod, header Header, payload Payload) (string, 
 
 	unsignedSignature := b64TokenHeader + "." + b64TokenPayload
 
-	signature, err := Sign(signingHash, unsignedSignature)
+	signature, err := Sign(algorithm, unsignedSignature)
 	if err != nil {
 		return "", err
 	}
@@ -122,7 +77,7 @@ func Encode(signingHash SigningMethod, header Header, payload Payload) (string, 
 }
 
 // Verify verifies if a token is valid,
-func Verify(signingHash SigningMethod, encoded string) error {
+func Verify(algorithm Algorithm, encoded string) error {
 	encryptedComponents := strings.Split(encoded, ".")
 
 	b64Header := encryptedComponents[0]
@@ -130,7 +85,7 @@ func Verify(signingHash SigningMethod, encoded string) error {
 	b64Signature := encryptedComponents[2]
 
 	unsignedAttempt := b64Header + "." + b64Payload
-	signedAttempt, err := Sign(signingHash, unsignedAttempt)
+	signedAttempt, err := Sign(algorithm, unsignedAttempt)
 
 	if err != nil {
 		return err

@@ -17,19 +17,24 @@ Creating a token is actually pretty easy.
 
 The first step is to pick a signing method. For demonstration purposes we will choose HSMAC256.
 
-    signingMethod :=  gwt.HmacSha256("ThisIsTheSecret")
+    algorithm :=  gwt.HmacSha256("ThisIsTheSecret")
    
-Now we need to create a header, and a payload.
+Now we need to the claims, and edit some values
 
-    CODE HERE
+    claims := jwt.NewClaim()
+    claims["isAdmin"] = true
     
 Then we will need to sign it!
 
-    CODE HERE
-    
+    token, err := jwt.Encode(algorithm, claims)
+    if err != nil {
+        panic(err)    
+    }
     
 ###How to authenticate a token?
 Authenticating a token is quite simple. All we need to do is...
 
-    CODE HERE
+    if jwt.Verify(algorithm, token) == nil {
+        //authenticated
+    } 
     
