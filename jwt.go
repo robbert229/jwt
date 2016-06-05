@@ -4,6 +4,7 @@ package jwt
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"crypto/sha512"
 	"hash"
 	"encoding/base64"
 	"encoding/json"
@@ -12,12 +13,42 @@ import (
 	"time"
 )
 
+//SigningMethod is the algorithm used to sign and validate a token.
+type SigningMethod struct {
+	signingHash hash.Hash
+	algorithm string
+}
+
+// NewHeader returns a new Header object.
+func (method *SigningMethod) NewHeader() *Header{
+	return &Header{
+		Typ: "JWT",
+		Alg: method.algorithm,
+	}
+}
+
+// Sum returns the sum of the hash
+func (method *SigningMethod) Sum(data []byte) []byte {
+	return method.signingHash.Sum(data)
+}
+
+// Reset resets the hash
+func (method *SigningMethod) Reset(){
+	method.signingHash.Reset()
+}
+
+// Write writes the specified bytes to the hash
+func (method *SigningMethod) Write(data []byte) (int, error){
+	return method.signingHash.Write(data)
+}
+
 // Header containins important information for encrypting / decryting
 type Header struct {
 	Typ string // Token Type
 	Alg string // Message Authentication Code Algorithm - The issuer can freely set an algorithm to verify the signature on the token. However, some asymmetrical algorithms pose security concerns
 	Cty string // Content Type - This claim should always be JWT
 }
+
 
 // Payload contains the claims of the token
 type Payload struct {
@@ -31,13 +62,25 @@ type Payload struct {
 	Jti string    // JWT ID - case sensitive unique identifier of the token even among different issuers.
 }
 
-//HmacSha256 returns the hash for HMAC with SHA256
-func HmacSha256(key string) hash.Hash {
-	return hmac.New(sha256.New, []byte(key))
+
+//HmacSha256 returns the SingingMethod for HMAC with SHA256
+func HmacSha256(key string) SigningMethod {
+	return SigningMethod{
+		algorithm: "HS256",
+		signingHash: hmac.New(sha256.New, []byte(key)),
+	}
+}
+
+//HmacSha512 returns the SigningMethod for HMAC with SHA512
+func HmacSha512(key string) SigningMethod {
+	return SigningMethod{
+		algorithm: "HS512",
+		signingHash: hmac.New(sha512.New, []byte(key)),
+	}
 }
 
 //Sign signs the token with the given hash, and key
-func Sign(signingHash hash.Hash, unsignedToken string) (string, error){
+func Sign(signingHash SigningMethod, unsignedToken string) (string, error){
 	_, err := signingHash.Write([]byte(unsignedToken))
 	if err != nil {
 		return "", errors.New("Unable to write to HMAC-SHA256")
@@ -50,7 +93,7 @@ func Sign(signingHash hash.Hash, unsignedToken string) (string, error){
 }
 
 // Encode returns an encoded JWT token from a header, payload, and secret
-func Encode(signingHash hash.Hash, header Header, payload Payload) (string, error) {
+func Encode(signingHash SigningMethod, header Header, payload Payload) (string, error) {
 	jsonTokenHeader, err := json.Marshal(header)
 	if err != nil {
 		return "", errors.New("unable to marshal header")
@@ -79,7 +122,7 @@ func Encode(signingHash hash.Hash, header Header, payload Payload) (string, erro
 }
 
 // Verify verifies if a token is valid,
-func Verify(signingHash hash.Hash, encoded string) error {
+func Verify(signingHash SigningMethod, encoded string) error {
 	encryptedComponents := strings.Split(encoded, ".")
 
 	b64Header := encryptedComponents[0]
