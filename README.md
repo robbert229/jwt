@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/robbert229/jwt.svg?branch=master)](https://travis-ci.org/robbert229/jwt)
+[![Build Status](https://travis-ci.org/robbert229/jwt.svg?branch=master)](https://travis-ci.org/robbert229/jwt) [![codecov](https://codecov.io/gh/robbert229/jwt/branch/master/graph/badge.svg)](https://codecov.io/gh/robbert229/jwt) [![codecov](https://codecov.io/gh/robbert229/jwt/branch/master/graph/badge.svg)](https://codecov.io/gh/robbert229/jwt)
+
 # jwt
 This is a minimal implementation of JWT designed with simplicity in mind.
 
