@@ -21,4 +21,14 @@ func main() {
     if jwt.Verify(algorithm, token) != nil {
         panic(err)
     }
+    
+    loadedClaims, err := jwt.LoadClaims(algorithm, token)
+    if err != nil {
+        panic(err)
+    }
+    
+    if loadedClaims["isAdmin"].(bool) == true {
+        //user is an admin    
+        fmt.Println("User is an admin")
+    }
 }

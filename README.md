@@ -38,3 +38,16 @@ Authenticating a token is quite simple. All we need to do is...
         //authenticated
     } 
     
+###How do we get the claims?
+The claims are stored in a `map[string]interface{}`. To get the claims from a token simply...
+    
+    claims, err := jwt.LoadClaims(algorithm, token)
+    if err != nil {
+        panic(err)
+    }
+    
+    if claims["isAdmin"].(bool) == true {
+        //user is an admin    
+    }
+    
+From there on the claims can

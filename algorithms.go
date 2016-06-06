@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/sha512"
+    "crypto"
 	"hash"
 )
 
@@ -50,4 +51,12 @@ func HmacSha512(key string) Algorithm {
 		algorithm:   "HS512",
 		signingHash: hmac.New(sha512.New, []byte(key)),
 	}
+}
+
+//HmacSha384 returns the SigningMethod for HMAC with SHA384
+func HmacSha384(key string) Algorithm {
+    return Algorithm{
+        algorithm: "HS384",
+        signingHash: hmac.New(crypto.SHA384.New, []byte(key)),
+    }
 }

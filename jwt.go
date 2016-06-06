@@ -76,9 +76,8 @@ func Encode(algorithm Algorithm, payload map[string]interface{}) (string, error)
 	return token, nil
 }
 
-
-// Verify verifies if a token is valid,
-func Verify(algorithm Algorithm, encoded string) error {
+// LoadClaims returns a map representing the token's claims. DOESNT validate the claims though.
+func LoadClaims(algorithm Algorithm, encoded string) (map[string]interface{}, error) {
 	encryptedComponents := strings.Split(encoded, ".")
 
 	b64Header := encryptedComponents[0]
@@ -89,22 +88,32 @@ func Verify(algorithm Algorithm, encoded string) error {
 	signedAttempt, err := Sign(algorithm, unsignedAttempt)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	b64SignedAttempt := base64.StdEncoding.EncodeToString([]byte(signedAttempt))
 
 	if strings.Compare(b64Signature, b64SignedAttempt) != 0 {
-		return errors.New("Invalid Signature Doesn't Match")
+		return nil, errors.New("Invalid Signature Doesn't Match")
 	}
 
 	var claims map[string]interface{}
 	payload, err := base64.StdEncoding.DecodeString(b64Payload)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	
 	err = json.Unmarshal(payload, &claims)
+	if err != nil {
+		return nil, err
+	}
+	
+	return claims, nil
+}
+
+// Verify verifies if a token is valid,
+func Verify(algorithm Algorithm, encoded string) error {
+	claims, err := LoadClaims(algorithm, encoded)
 	if err != nil {
 		return err
 	}
