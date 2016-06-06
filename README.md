@@ -8,6 +8,7 @@ This implementation doesn't fully follow the specs in that it ignores the algori
 
 ##What algorithms does it support?
 * HS256
+* HS384
 * HS512
 
 ##How does it work?
