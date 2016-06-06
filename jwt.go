@@ -76,6 +76,7 @@ func Encode(algorithm Algorithm, payload map[string]interface{}) (string, error)
 	return token, nil
 }
 
+
 // Verify verifies if a token is valid,
 func Verify(algorithm Algorithm, encoded string) error {
 	encryptedComponents := strings.Split(encoded, ".")
@@ -97,5 +98,37 @@ func Verify(algorithm Algorithm, encoded string) error {
 		return errors.New("Invalid Signature Doesn't Match")
 	}
 
+	var claims map[string]interface{}
+	payload, err := base64.StdEncoding.DecodeString(b64Payload)
+	if err != nil {
+		return err
+	}
+	
+	err = json.Unmarshal(payload, &claims)
+	if err != nil {
+		return err
+	}
+	
+	if claims["exp"] != nil {
+		exp, err := time.Parse(time.RFC3339, claims["exp"].(string))
+		if err != nil {
+			return err
+		}
+		if exp.Before(time.Now()){
+			return errors.New("Token has expired")
+		}
+	}
+	
+	
+	if claims["nbf"] != nil { 
+		nbf, err := time.Parse(time.RFC3339, claims["nbf"].(string))
+		if err != nil {
+			return err
+		}
+		if nbf.After(time.Now()){
+			return errors.New("Token is not yet accepted") 
+		}
+	}
+	
 	return nil
 }

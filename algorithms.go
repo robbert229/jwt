@@ -7,7 +7,7 @@ import (
 	"hash"
 )
 
-//SigningMethod is the algorithm used to sign and validate a token.
+//Algorithm is used to sign and validate a token.
 type Algorithm struct {
 	signingHash hash.Hash
 	algorithm   string
