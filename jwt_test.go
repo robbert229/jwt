@@ -12,8 +12,8 @@ func TestEncodeAndVerifyToken(t *testing.T) {
 	signingHash := HmacSha256(secret)
 	
 	payload := NewClaim()
-	payload["nbf"] = time.Now().Add(-1 * time.Hour).Format(time.RFC3339)
-	payload["exp"] = time.Now().Add(1 * time.Hour).Format(time.RFC3339)
+	payload["nbf"] = time.Now().Add(-1 * time.Hour).Unix()
+	payload["exp"] = time.Now().Add(1 * time.Hour).Unix()
 	
 	err := json.Unmarshal([]byte(`{"sub":"1234567890","name":"John Doe","admin":true}`), &payload)
 	if err != nil {
@@ -63,7 +63,7 @@ func TestVerifyTokenExp(t *testing.T){
 	
 	
 	payload := NewClaim()
-	payload["exp"] = time.Now().Add(-1 * time.Hour).Format(time.RFC3339)
+	payload["exp"] = time.Now().Add(-1 * time.Hour).Unix()
 
 	err := json.Unmarshal([]byte(`{"sub":"1234567890","name":"John Doe","admin":true}`), &payload)
 	if err != nil {
@@ -86,7 +86,7 @@ func TestVerifyTokenNbf(t *testing.T){
 	signingHash := HmacSha256(secret)
 	
 	payload := NewClaim()
-	payload["nbf"] = time.Now().Add(1 * time.Hour).Format(time.RFC3339)
+	payload["nbf"] = time.Now().Add(1 * time.Hour).Unix()
 
 	err := json.Unmarshal([]byte(`{"sub":"1234567890","name":"John Doe","admin":true}`), &payload)
 	if err != nil {

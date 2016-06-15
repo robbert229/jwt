@@ -27,7 +27,7 @@ type Header struct {
 func NewClaim() map[string]interface{} {
 	claim := make(map[string]interface{})
 	
-	claim["iat"] = time.Now()
+	claim["iat"] = time.Now().Unix()
 	
 	return claim
 }
@@ -113,16 +113,21 @@ func LoadClaims(algorithm Algorithm, encoded string) (map[string]interface{}, er
 
 // Verify verifies if a token is valid,
 func Verify(algorithm Algorithm, encoded string) error {
+	var err error
+	defer func(){
+		rec := recover()
+		if rec != nil {
+			err = errors.New("Panic Caught!")
+		}
+	}()
+
 	claims, err := LoadClaims(algorithm, encoded)
 	if err != nil {
 		return err
 	}
 	
 	if claims["exp"] != nil {
-		exp, err := time.Parse(time.RFC3339, claims["exp"].(string))
-		if err != nil {
-			return err
-		}
+		exp := time.Unix(int64(claims["exp"].(float64)), 0)
 		if exp.Before(time.Now()){
 			return errors.New("Token has expired")
 		}
@@ -130,14 +135,11 @@ func Verify(algorithm Algorithm, encoded string) error {
 	
 	
 	if claims["nbf"] != nil { 
-		nbf, err := time.Parse(time.RFC3339, claims["nbf"].(string))
-		if err != nil {
-			return err
-		}
+		nbf := time.Unix(int64(claims["nbf"].(float64)), 0)
 		if nbf.After(time.Now()){
 			return errors.New("Token is not yet accepted") 
 		}
 	}
 	
-	return nil
+	return err
 }

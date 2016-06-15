@@ -2,6 +2,7 @@ package main
 import (
     "github.com/robbert229/jwt"   
     "fmt" 
+	"time"
 )
 
 func main() {
@@ -10,7 +11,9 @@ func main() {
     
     claims := jwt.NewClaim()
     claims["isAdmin"] = true
-    
+    claims["exp"] = int(time.Now().Unix()) + 60
+
+
     token, err := jwt.Encode(algorithm, claims)
     if err != nil {
         panic(err)
