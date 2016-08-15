@@ -37,14 +37,14 @@ Then we will need to sign it!
 ###How to authenticate a token?
 Authenticating a token is quite simple. All we need to do is...
 
-    if jwt.Verify(algorithm, token) == nil {
+    if jwt.IsValid(algorithm, token) == nil {
         //authenticated
     } 
     
 ###How do we get the claims?
 The claims are stored in a `map[string]interface{}`. To get the claims from a token simply...
     
-    claims, err := jwt.LoadClaims(algorithm, token)
+    claims, err := jwt.Decode(algorithm, token)
     if err != nil {
         panic(err)
     }

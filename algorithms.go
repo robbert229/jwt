@@ -1,10 +1,10 @@
 package jwt
 
 import (
+	"crypto"
 	"crypto/hmac"
 	"crypto/sha256"
 	"crypto/sha512"
-    "crypto"
 	"hash"
 )
 
@@ -15,26 +15,26 @@ type Algorithm struct {
 }
 
 // NewHeader returns a new Header object.
-func (method *Algorithm) NewHeader() *Header {
+func (alg *Algorithm) NewHeader() *Header {
 	return &Header{
 		Typ: "JWT",
-		Alg: method.algorithm,
+		Alg: alg.algorithm,
 	}
 }
 
 // Sum returns the sum of the hash
-func (method *Algorithm) Sum(data []byte) []byte {
-	return method.signingHash.Sum(data)
+func (alg *Algorithm) Sum(data []byte) []byte {
+	return alg.signingHash.Sum(data)
 }
 
 // Reset resets the hash
-func (method *Algorithm) Reset() {
-	method.signingHash.Reset()
+func (alg *Algorithm) Reset() {
+	alg.signingHash.Reset()
 }
 
 // Write writes the specified bytes to the hash
-func (method *Algorithm) Write(data []byte) (int, error) {
-	return method.signingHash.Write(data)
+func (alg *Algorithm) Write(data []byte) (int, error) {
+	return alg.signingHash.Write(data)
 }
 
 //HmacSha256 returns the SingingMethod for HMAC with SHA256
@@ -55,8 +55,8 @@ func HmacSha512(key string) Algorithm {
 
 //HmacSha384 returns the SigningMethod for HMAC with SHA384
 func HmacSha384(key string) Algorithm {
-    return Algorithm{
-        algorithm: "HS384",
-        signingHash: hmac.New(crypto.SHA384.New, []byte(key)),
-    }
+	return Algorithm{
+		algorithm:   "HS384",
+		signingHash: hmac.New(crypto.SHA384.New, []byte(key)),
+	}
 }

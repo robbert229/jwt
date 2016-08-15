@@ -10,11 +10,11 @@ import (
 func TestEncodeAndVerifyToken(t *testing.T) {
 	secret := "secret"
 	signingHash := HmacSha256(secret)
-	
+
 	payload := NewClaim()
 	payload["nbf"] = time.Now().Add(-1 * time.Hour).Unix()
 	payload["exp"] = time.Now().Add(1 * time.Hour).Unix()
-	
+
 	err := json.Unmarshal([]byte(`{"sub":"1234567890","name":"John Doe","admin":true}`), &payload)
 	if err != nil {
 		t.Fatal(err)
@@ -25,7 +25,7 @@ func TestEncodeAndVerifyToken(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = Verify(signingHash, token)
+	err = IsValid(signingHash, token)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func TestEncodeAndVerifyToken(t *testing.T) {
 func TestVerifyToken(t *testing.T) {
 	secret := "secret"
 	signingHash := HmacSha256(secret)
-	
+
 	payload := NewClaim()
 	err := json.Unmarshal([]byte(`{"sub":"1234567890","name":"John Doe","admin":true}`), &payload)
 	if err != nil {
@@ -51,17 +51,16 @@ func TestVerifyToken(t *testing.T) {
 	invalidSignature := "cBab30RMHrHDcEfxjoYZgeFONFh7Hg"
 	invalidToken := tokenComponents[0] + "." + tokenComponents[1] + "." + invalidSignature
 
-	err = Verify(signingHash, invalidToken)
+	err = IsValid(signingHash, invalidToken)
 	if err == nil {
 		t.Fatal(err)
 	}
 }
 
-func TestVerifyTokenExp(t *testing.T){
+func TestVerifyTokenExp(t *testing.T) {
 	secret := "secret"
 	signingHash := HmacSha256(secret)
-	
-	
+
 	payload := NewClaim()
 	payload["exp"] = time.Now().Add(-1 * time.Hour).Unix()
 
@@ -74,17 +73,17 @@ func TestVerifyTokenExp(t *testing.T){
 	if err != nil {
 		t.Fatal(err)
 	}
-	
-	err = Verify(signingHash, token)
+
+	err = IsValid(signingHash, token)
 	if err == nil {
 		t.Fatal(err)
 	}
 }
 
-func TestVerifyTokenNbf(t *testing.T){
+func TestVerifyTokenNbf(t *testing.T) {
 	secret := "secret"
 	signingHash := HmacSha256(secret)
-	
+
 	payload := NewClaim()
 	payload["nbf"] = time.Now().Add(1 * time.Hour).Unix()
 
@@ -97,8 +96,8 @@ func TestVerifyTokenNbf(t *testing.T){
 	if err != nil {
 		t.Fatal(err)
 	}
-	
-	err = Verify(signingHash, token)
+
+	err = IsValid(signingHash, token)
 	if err == nil {
 		t.Fatal(err)
 	}
