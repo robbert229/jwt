@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -12,8 +13,8 @@ func TestEncodeAndVerifyToken(t *testing.T) {
 	signingHash := HmacSha256(secret)
 
 	payload := NewClaim()
-	payload["nbf"] = time.Now().Add(-1 * time.Hour).Unix()
-	payload["exp"] = time.Now().Add(1 * time.Hour).Unix()
+	payload.Set("nbf", fmt.Sprintf("%d", time.Now().Add(-1*time.Hour).Unix()))
+	payload.Set("exp", fmt.Sprintf("%d", time.Now().Add(1*time.Hour).Unix()))
 
 	err := json.Unmarshal([]byte(`{"sub":"1234567890","name":"John Doe","admin":true}`), &payload)
 	if err != nil {
@@ -62,7 +63,7 @@ func TestVerifyTokenExp(t *testing.T) {
 	signingHash := HmacSha256(secret)
 
 	payload := NewClaim()
-	payload["exp"] = time.Now().Add(-1 * time.Hour).Unix()
+	payload.Set("exp", fmt.Sprintf("%d", time.Now().Add(-1*time.Hour).Unix()))
 
 	err := json.Unmarshal([]byte(`{"sub":"1234567890","name":"John Doe","admin":true}`), &payload)
 	if err != nil {
@@ -85,7 +86,7 @@ func TestVerifyTokenNbf(t *testing.T) {
 	signingHash := HmacSha256(secret)
 
 	payload := NewClaim()
-	payload["nbf"] = time.Now().Add(1 * time.Hour).Unix()
+	payload.Set("nbf", fmt.Sprintf("%d", time.Now().Add(1*time.Hour).Unix()))
 
 	err := json.Unmarshal([]byte(`{"sub":"1234567890","name":"John Doe","admin":true}`), &payload)
 	if err != nil {

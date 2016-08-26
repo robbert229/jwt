@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -47,6 +48,10 @@ type Header struct {
 	Cty string // Content Type - This claim should always be JWT
 }
 
+type Claims struct {
+	claimsMap map[string]string
+}
+
 // NewClaim returns a new map representing the claims with the default values. The schema is detailed below.
 //		claim["iis"] Issuer - string - identifies principal that issued the JWT;
 //		claim["sub"] Subject - string - identifies the subject of the JWT;
@@ -55,12 +60,28 @@ type Header struct {
 //		claim["nbf"] Not before - time - Similarly, the not-before time claim identifies the time on which the JWT will start to be accepted for processing.
 //		claim["iat"] Issued at - time - The "iat" (issued at) claim identifies the time at which the JWT was issued.
 //		claim["jti"] JWT ID - string - case sensitive unique identifier of the token even among different issuers.
-func NewClaim() map[string]interface{} {
-	claim := make(map[string]interface{})
+func NewClaim() *Claims {
+	claimsMap := make(map[string]string)
 
-	claim["iat"] = time.Now().Unix()
+	claims := &Claims{
+		claimsMap: claimsMap,
+	}
 
-	return claim
+	claims.Set("iat", fmt.Sprintf("%d", time.Now().Unix()))
+
+	return claims
+}
+
+func (c *Claims) Set(key, value string) {
+	c.claimsMap[key] = value
+}
+
+func (c Claims) Get(key string) (string, error) {
+	if result, ok := c.claimsMap[key]; ok != true {
+		return "", errors.New("claim doesn't exist")
+	} else {
+		return result, nil
+	}
 }
 
 // Sign signs the token with the given hash, and key
@@ -77,7 +98,7 @@ func Sign(algorithm Algorithm, unsignedToken string) (string, error) {
 }
 
 // Encode returns an encoded JWT token from a header, payload, and secret
-func Encode(algorithm Algorithm, payload map[string]interface{}) (string, error) {
+func Encode(algorithm Algorithm, payload *Claims) (string, error) {
 	header := algorithm.NewHeader()
 
 	jsonTokenHeader, err := json.Marshal(header)
@@ -87,7 +108,7 @@ func Encode(algorithm Algorithm, payload map[string]interface{}) (string, error)
 
 	b64TokenHeader := base64.StdEncoding.EncodeToString(jsonTokenHeader)
 
-	jsonTokenPayload, err := json.Marshal(payload)
+	jsonTokenPayload, err := json.Marshal(payload.claimsMap)
 	if err != nil {
 		return "", ErrEncodeFailure{err, "unable to marshal payload"}
 	}
@@ -108,27 +129,12 @@ func Encode(algorithm Algorithm, payload map[string]interface{}) (string, error)
 }
 
 // Decode returns a map representing the token's claims. DOESNT validate the claims though.
-func Decode(algorithm Algorithm, encoded string) (map[string]interface{}, error) {
+func Decode(algorithm Algorithm, encoded string) (*Claims, error) {
 	encryptedComponents := strings.Split(encoded, ".")
 
-	b64Header := encryptedComponents[0]
 	b64Payload := encryptedComponents[1]
-	b64Signature := encryptedComponents[2]
 
-	unsignedAttempt := b64Header + "." + b64Payload
-	signedAttempt, err := Sign(algorithm, unsignedAttempt)
-
-	if err != nil {
-		return nil, ErrDecodeFailure{err, "unable to sign token for validation"}
-	}
-
-	b64SignedAttempt := base64.StdEncoding.EncodeToString([]byte(signedAttempt))
-
-	if strings.Compare(b64Signature, b64SignedAttempt) != 0 {
-		return nil, ErrInvalidSignature
-	}
-
-	var claims map[string]interface{}
+	var claims map[string]string
 	payload, err := base64.StdEncoding.DecodeString(b64Payload)
 	if err != nil {
 		return nil, ErrDecodeFailure{err, "unable to decode base64 payload"}
@@ -138,7 +144,25 @@ func Decode(algorithm Algorithm, encoded string) (map[string]interface{}, error)
 		return nil, ErrDecodeFailure{err, "unable to unmarshal payload json"}
 	}
 
-	return claims, nil
+	return &Claims{
+		claimsMap: claims,
+	}, nil
+}
+
+func timeFromClaim(c *Claims, claim string) (time.Time, error) {
+	var err error
+	var timeString string
+
+	if timeString, err = c.Get(claim); err != nil {
+		return time.Unix(0, 0), ErrDecodeFailure{err, "time claim not found"}
+	}
+
+	timeFloat, err := strconv.ParseFloat(timeString, 64)
+	if err != nil {
+		return time.Unix(0, 0), ErrDecodeFailure{err, "unable to parse time"}
+	}
+
+	return time.Unix(int64(timeFloat), 0), nil
 }
 
 // Verify verifies if a token is valid,
@@ -148,19 +172,41 @@ func IsValid(algorithm Algorithm, encoded string) error {
 		return err
 	}
 
-	if f, ok := claims["exp"].(float64); ok {
-		exp := time.Unix(int64(f), 0)
-		if exp.Before(time.Now()) {
-			return ErrExpired
-		}
+	encryptedComponents := strings.Split(encoded, ".")
+
+	b64Header := encryptedComponents[0]
+	b64Payload := encryptedComponents[1]
+	b64Signature := encryptedComponents[2]
+
+	unsignedAttempt := b64Header + "." + b64Payload
+	signedAttempt, err := Sign(algorithm, unsignedAttempt)
+	if err != nil {
+		return ErrDecodeFailure{err, "unable to sign token for validation"}
 	}
 
-	if f, ok := claims["nbf"].(float64); ok {
-		nbf := time.Unix(int64(f), 0)
-		if nbf.After(time.Now()) {
-			return ErrNotValidYet
-		}
+	b64SignedAttempt := base64.StdEncoding.EncodeToString([]byte(signedAttempt))
+
+	if strings.Compare(b64Signature, b64SignedAttempt) != 0 {
+		return ErrInvalidSignature
 	}
 
-	return err
+	exp, err := timeFromClaim(claims, "exp")
+	if err != nil {
+		return err
+	}
+
+	if exp.Before(time.Now()) {
+		return ErrExpired
+	}
+
+	nbf, err := timeFromClaim(claims, "nbf")
+	if err != nil {
+		return err
+	}
+
+	if nbf.After(time.Now()) {
+		return ErrNotValidYet
+	}
+
+	return nil
 }
