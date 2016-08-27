@@ -20,7 +20,7 @@ Creating a token is actually pretty easy.
 
 The first step is to pick a signing method. For demonstration purposes we will choose HSMAC256.
 
-    algorithm :=  gwt.HmacSha256("ThisIsTheSecret")
+    algorithm :=  jwt.HmacSha256("ThisIsTheSecret")
    
 Now we need to the claims, and edit some values
 
