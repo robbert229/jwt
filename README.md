@@ -25,11 +25,11 @@ The first step is to pick a signing method. For demonstration purposes we will c
 Now we need to the claims, and edit some values
 
     claims := jwt.NewClaim()
-    claims["isAdmin"] = true
+    claims.Set("Role", "Admin)
     
 Then we will need to sign it!
 
-    token, err := jwt.Encode(algorithm, claims)
+    token, err := algorithm.Encode(claims)
     if err != nil {
         panic(err)    
     }
@@ -37,20 +37,18 @@ Then we will need to sign it!
 ###How to authenticate a token?
 Authenticating a token is quite simple. All we need to do is...
 
-    if jwt.IsValid(algorithm, token) == nil {
+    if algorithm.Validate(token) == nil {
         //authenticated
     } 
     
 ###How do we get the claims?
-The claims are stored in a `map[string]interface{}`. To get the claims from a token simply...
+The claims are stored in a `Claims` struct. To get the claims from a token simply...
     
-    claims, err := jwt.Decode(algorithm, token)
+    claims, err := algorithm.Decode(token)
     if err != nil {
         panic(err)
     }
     
-    if claims["isAdmin"].(bool) == true {
+    if strings.Compare(claims.Get("Role"), "Admin") {
         //user is an admin    
     }
-    
-From there on the claims can
