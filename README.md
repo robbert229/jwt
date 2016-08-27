@@ -48,7 +48,7 @@ The claims are stored in a `Claims` struct. To get the claims from a token simpl
     if err != nil {
         panic(err)
     }
-    
-    if strings.Compare(claims.Get("Role"), "Admin") {
+    _, role := claims.Get("Role")
+    if strings.Compare(role, "Admin") {
         //user is an admin    
     }
