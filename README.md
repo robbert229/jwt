@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/robbert229/jwt.svg?branch=master)](https://travis-ci.org/robbert229/jwt) [![Coverage Status](https://coveralls.io/repos/github/robbert229/jwt/badge.svg?branch=master)](https://coveralls.io/github/robbert229/jwt?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/robbert229/jwt)](https://goreportcard.com/report/github.com/robbert229/jwt)
+[![Build Status](https://travis-ci.org/robbert229/jwt.svg?branch=master)](https://travis-ci.org/robbert229/jwt) [![Coverage Status](https://coveralls.io/repos/github/robbert229/jwt/badge.svg?branch=master)](https://coveralls.io/github/robbert229/jwt?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/robbert229/jwt)](https://goreportcard.com/report/github.com/robbert229/jwt) [![GoDoc](https://godoc.org/github.com/robbert229/jwt?status.svg)](https://godoc.org/github.com/robbert229/jwt)
 
 # jwt
 This is a minimal implementation of JWT designed with simplicity in mind.
