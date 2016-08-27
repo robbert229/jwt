@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/robbert229/jwt"
+	"strings"
 	"time"
+
+	"github.com/robbert229/jwt"
 )
 
 func main() {
@@ -11,26 +13,27 @@ func main() {
 	algorithm := jwt.HmacSha256(secret)
 
 	claims := jwt.NewClaim()
-	claims["isAdmin"] = true
-	claims["exp"] = int(time.Now().Unix()) + 60
+	claims.Set("Role", "Admin")
+	claims.SetTime("exp", time.Now().Add(time.Minute))
 
-	token, err := jwt.Encode(algorithm, claims)
+	token, err := algorithm.Encode(claims)
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Printf("Token: %s\n", token)
 
-	if jwt.IsValid(algorithm, token) != nil {
+	if algorithm.Validate(token) != nil {
 		panic(err)
 	}
 
-	loadedClaims, err := jwt.Decode(algorithm, token)
+	loadedClaims, err := algorithm.Decode(token)
 	if err != nil {
 		panic(err)
 	}
 
-	if loadedClaims["isAdmin"].(bool) == true {
+	role, err := loadedClaims.Get("Role")
+	if strings.Compare(role, "Admin") == 0 {
 		//user is an admin
 		fmt.Println("User is an admin")
 	}
