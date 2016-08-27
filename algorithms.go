@@ -91,7 +91,7 @@ func (a *Algorithm) Encode(payload *Claims) (string, error) {
 	return token, nil
 }
 
-// Decode returns a map representing the token's claims. DOESNT validate the claims though.
+// Decode returns a map representing the token's claims. DOESN'T validate the claims though.
 func (a *Algorithm) Decode(encoded string) (*Claims, error) {
 	encryptedComponents := strings.Split(encoded, ".")
 

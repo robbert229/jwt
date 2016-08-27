@@ -12,7 +12,7 @@ var (
 	ErrInvalidSignature = errors.New("Invalid signature doesn't match")
 )
 
-// ErrEncodeFailure is returned when the Encode funtion fails to properly encode a claim set.
+// ErrEncodeFailure is returned when the Encode function fails to properly encode a claim set.
 type ErrEncodeFailure struct {
 	Embedded    error
 	Description string

@@ -33,6 +33,10 @@ func main() {
 	}
 
 	role, err := loadedClaims.Get("Role")
+	if err != nil {
+		panic(err)
+	}
+
 	if strings.Compare(role, "Admin") == 0 {
 		//user is an admin
 		fmt.Println("User is an admin")
