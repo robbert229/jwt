@@ -14,13 +14,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	// ErrTokenExpired is returned by algorithm.Validate when the token has expired.
-	ErrTokenExpired = errors.New("token has expired")
-	// ErrTokenNotYetValid is returned by algorithm.Validate what the token is not yet valid. (nbf tag is in the future)
-	ErrTokenNotYetValid = errors.New("token is not yet valid")
-)
-
 //Algorithm is used to sign and validate a token.
 type Algorithm struct {
 	signingHash hash.Hash
@@ -66,14 +59,14 @@ func (a *Algorithm) Encode(payload *Claims) (string, error) {
 
 	jsonTokenHeader, err := json.Marshal(header)
 	if err != nil {
-		return "", ErrEncodeFailure{err, "unable to marshal header"}
+		return "", errors.Wrap(err, "unable to marshal header")
 	}
 
 	b64TokenHeader := base64.StdEncoding.EncodeToString(jsonTokenHeader)
 
 	jsonTokenPayload, err := json.Marshal(payload.claimsMap)
 	if err != nil {
-		return "", ErrEncodeFailure{err, "unable to marshal payload"}
+		return "", errors.Wrap(err, "unable to marshal payload")
 	}
 
 	b64TokenPayload := base64.StdEncoding.EncodeToString(jsonTokenPayload)
@@ -82,7 +75,7 @@ func (a *Algorithm) Encode(payload *Claims) (string, error) {
 
 	signature, err := a.Sign(unsignedSignature)
 	if err != nil {
-		return "", ErrEncodeFailure{err, "unable to sign token"}
+		return "", errors.Wrap(err, "unable to sign token")
 	}
 	b64Signature := base64.StdEncoding.EncodeToString([]byte(signature))
 
@@ -100,11 +93,11 @@ func (a *Algorithm) Decode(encoded string) (*Claims, error) {
 	var claims map[string]string
 	payload, err := base64.StdEncoding.DecodeString(b64Payload)
 	if err != nil {
-		return nil, ErrDecodeFailure{err, "unable to decode base64 payload"}
+		return nil, errors.Wrap(err, "unable to decode base64 payload")
 	}
 
 	if err := json.Unmarshal(payload, &claims); err != nil {
-		return nil, ErrDecodeFailure{err, "unable to unmarshal payload json"}
+		return nil, errors.Wrap(err, "unable to unmarshal payload json")
 	}
 
 	return &Claims{
@@ -128,13 +121,13 @@ func (a *Algorithm) Validate(encoded string) error {
 	unsignedAttempt := b64Header + "." + b64Payload
 	signedAttempt, err := a.Sign(unsignedAttempt)
 	if err != nil {
-		return ErrDecodeFailure{err, "unable to sign token for validation"}
+		return errors.Wrap(err, "unable to sign token for validation")
 	}
 
 	b64SignedAttempt := base64.StdEncoding.EncodeToString([]byte(signedAttempt))
 
 	if strings.Compare(b64Signature, b64SignedAttempt) != 0 {
-		return ErrInvalidSignature
+		return errors.New("invalid signature")
 	}
 
 	exp, err := claims.GetTime("exp")
@@ -143,7 +136,7 @@ func (a *Algorithm) Validate(encoded string) error {
 	}
 
 	if exp.Before(time.Now()) {
-		return ErrTokenExpired
+		return errors.New("token has expired")
 	}
 
 	nbf, err := claims.GetTime("nbf")
@@ -152,7 +145,7 @@ func (a *Algorithm) Validate(encoded string) error {
 	}
 
 	if nbf.After(time.Now()) {
-		return ErrTokenNotYetValid
+		return errors.New("token isn't valid yet")
 	}
 
 	return nil

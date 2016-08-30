@@ -1,17 +1,11 @@
 package jwt
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
-)
 
-var (
-	// ErrClaimNotFound is returned when you attempt to use claim.Get and that specific claim is null.
-	ErrClaimNotFound = errors.New("claim not found")
-	// ErrInvalidTimeFormat is returned by claim.GetTime when the formatting for the time claim is invalid.
-	ErrInvalidTimeFormat = errors.New("invalid time format")
+	"github.com/pkg/errors"
 )
 
 // Claims contains the claims of a jwt.
@@ -59,12 +53,12 @@ func (c *Claims) GetTime(key string) (time.Time, error) {
 	var timeString string
 
 	if timeString, err = c.Get(key); err != nil {
-		return time.Unix(0, 0), ErrClaimNotFound
+		return time.Unix(0, 0), errors.Wrap(err, "claim doesn't exist")
 	}
 
 	timeFloat, err := strconv.ParseFloat(timeString, 64)
 	if err != nil {
-		return time.Unix(0, 0), ErrInvalidTimeFormat
+		return time.Unix(0, 0), errors.Wrap(err, "claim isn't a valid float")
 	}
 
 	return time.Unix(int64(timeFloat), 0), nil
