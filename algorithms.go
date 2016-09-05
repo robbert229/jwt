@@ -112,6 +112,22 @@ func (a *Algorithm) Validate(encoded string) error {
 		return err
 	}
 
+	if err := a.validateSignature(encoded); err != nil {
+		return errors.Wrap(err, "failed to validate signature")
+	}
+
+	if err := a.validateExp(claims); err != nil {
+		return errors.Wrap(err, "failed to validate exp")
+	}
+
+	if err := a.validateNbf(claims); err != nil {
+		return errors.Wrap(err, "failed to validate nbf")
+	}
+
+	return nil
+}
+
+func (a *Algorithm) validateSignature(encoded string) error {
 	encryptedComponents := strings.Split(encoded, ".")
 
 	b64Header := encryptedComponents[0]
@@ -130,22 +146,34 @@ func (a *Algorithm) Validate(encoded string) error {
 		return errors.New("invalid signature")
 	}
 
-	exp, err := claims.GetTime("exp")
-	if err != nil {
-		return err
+	return nil
+}
+
+func (a *Algorithm) validateExp(claims *Claims) error {
+	if claims.HasClaim("exp") {
+		exp, err := claims.GetTime("exp")
+		if err != nil {
+			return err
+		}
+
+		if exp.Before(time.Now()) {
+			return errors.New("token has expired")
+		}
 	}
 
-	if exp.Before(time.Now()) {
-		return errors.New("token has expired")
-	}
+	return nil
+}
 
-	nbf, err := claims.GetTime("nbf")
-	if err != nil {
-		return err
-	}
+func (a *Algorithm) validateNbf(claims *Claims) error {
+	if claims.HasClaim("nbf") {
+		nbf, err := claims.GetTime("nbf")
+		if err != nil {
+			return err
+		}
 
-	if nbf.After(time.Now()) {
-		return errors.New("token isn't valid yet")
+		if nbf.After(time.Now()) {
+			return errors.New("token isn't valid yet")
+		}
 	}
 
 	return nil

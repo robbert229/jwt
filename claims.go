@@ -38,11 +38,11 @@ func (c *Claims) Set(key, value string) {
 	c.claimsMap[key] = value
 }
 
-// Get returns the claim in string form.
+// Get returns the claim in string form and returns an error if the specified claim doesn't exist.
 func (c Claims) Get(key string) (string, error) {
 	result, ok := c.claimsMap[key]
 	if ok != true {
-		return "", errors.New("claim doesn't exist")
+		return "", errors.Errorf("claim (%s) doesn't exist", key)
 	}
 	return result, nil
 }
@@ -53,7 +53,7 @@ func (c *Claims) GetTime(key string) (time.Time, error) {
 	var timeString string
 
 	if timeString, err = c.Get(key); err != nil {
-		return time.Unix(0, 0), errors.Wrap(err, "claim doesn't exist")
+		return time.Unix(0, 0), errors.Wrapf(err, "claim (%s) doesn't exist", key)
 	}
 
 	timeFloat, err := strconv.ParseFloat(timeString, 64)
@@ -67,4 +67,10 @@ func (c *Claims) GetTime(key string) (time.Time, error) {
 // SetTime sets the claim given to the specified time.
 func (c *Claims) SetTime(key string, value time.Time) {
 	c.Set(key, fmt.Sprintf("%d", value.Unix()))
+}
+
+// HasClaim returns if the claims map has the specified key.
+func (c *Claims) HasClaim(key string) bool {
+	_, ok := c.claimsMap[key]
+	return ok
 }
