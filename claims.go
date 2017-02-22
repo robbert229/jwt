@@ -2,7 +2,6 @@ package jwt
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -10,7 +9,7 @@ import (
 
 // Claims contains the claims of a jwt.
 type Claims struct {
-	claimsMap map[string]string
+	claimsMap map[string]interface{}
 }
 
 // NewClaim returns a new map representing the claims with the default values. The schema is detailed below.
@@ -22,7 +21,7 @@ type Claims struct {
 //		claim["iat"] Issued at - time - The "iat" (issued at) claim identifies the time at which the JWT was issued.
 //		claim["jti"] JWT ID - string - case sensitive unique identifier of the token even among different issuers.
 func NewClaim() *Claims {
-	claimsMap := make(map[string]string)
+	claimsMap := make(map[string]interface{})
 
 	claims := &Claims{
 		claimsMap: claimsMap,
@@ -34,39 +33,38 @@ func NewClaim() *Claims {
 }
 
 // Set sets the claim in string form.
-func (c *Claims) Set(key, value string) {
+func (c *Claims) Set(key string, value interface{}) {
 	c.claimsMap[key] = value
-}
-
-// Get returns the claim in string form and returns an error if the specified claim doesn't exist.
-func (c Claims) Get(key string) (string, error) {
-	result, ok := c.claimsMap[key]
-	if ok != true {
-		return "", errors.Errorf("claim (%s) doesn't exist", key)
-	}
-	return result, nil
-}
-
-// GetTime attempts to return a claim as a time.
-func (c *Claims) GetTime(key string) (time.Time, error) {
-	var err error
-	var timeString string
-
-	if timeString, err = c.Get(key); err != nil {
-		return time.Unix(0, 0), errors.Wrapf(err, "claim (%s) doesn't exist", key)
-	}
-
-	timeFloat, err := strconv.ParseFloat(timeString, 64)
-	if err != nil {
-		return time.Unix(0, 0), errors.Wrap(err, "claim isn't a valid float")
-	}
-
-	return time.Unix(int64(timeFloat), 0), nil
 }
 
 // SetTime sets the claim given to the specified time.
 func (c *Claims) SetTime(key string, value time.Time) {
 	c.Set(key, fmt.Sprintf("%d", value.Unix()))
+}
+
+// Get returns the claim in string form and returns an error if the specified claim doesn't exist.
+func (c Claims) Get(key string) (interface{}, error) {
+	result, ok := c.claimsMap[key]
+	if !ok {
+		return "", errors.Errorf("claim (%s) doesn't exist", key)
+	}
+
+	return result, nil
+}
+
+// GetTime attempts to return a claim as a time.
+func (c *Claims) GetTime(key string) (time.Time, error) {
+	raw, err := c.Get(key)
+	if err != nil {
+		return time.Unix(0, 0), errors.Wrapf(err, "claim (%s) doesn't exist", key)
+	}
+
+	timeFloat, ok := raw.(float64)
+	if !ok {
+		return time.Unix(0, 0), errors.Wrap(err, "claim isn't a valid float")
+	}
+
+	return time.Unix(int64(timeFloat), 0), nil
 }
 
 // HasClaim returns if the claims map has the specified key.
