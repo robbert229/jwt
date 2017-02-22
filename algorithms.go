@@ -90,7 +90,7 @@ func (a *Algorithm) Decode(encoded string) (*Claims, error) {
 
 	b64Payload := encryptedComponents[1]
 
-	var claims map[string]string
+	var claims map[string]interface{}
 	payload, err := base64.StdEncoding.DecodeString(b64Payload)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to decode base64 payload")
@@ -148,6 +148,7 @@ func (a *Algorithm) validateSignature(encoded string) error {
 
 	return nil
 }
+
 
 func (a *Algorithm) validateExp(claims *Claims) error {
 	if claims.HasClaim("exp") {

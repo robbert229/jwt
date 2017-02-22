@@ -24,13 +24,8 @@ func RunTest(t *testing.T, command func(Algorithm)) {
 func TestEncodeAndValidateToken(t *testing.T) {
 	RunTest(t, func(algorithm Algorithm) {
 		payload := NewClaim()
-		payload.SetTime("nbf", time.Now().Add(-1*time.Hour))
-		payload.SetTime("exp", time.Now().Add(1*time.Hour))
-
-		err := json.Unmarshal([]byte(`{"sub":"1234567890","name":"John Doe","admin":true}`), &payload)
-		if err != nil {
-			t.Fatal(err)
-		}
+		payload.SetTime("nbf", time.Now().Add(time.Duration(-1) * time.Hour))
+		payload.SetTime("exp", time.Now().Add(time.Duration(100) * time.Hour))
 
 		token, err := algorithm.Encode(payload)
 		if err != nil {
@@ -95,7 +90,7 @@ func TestVerifyTokenNbf(t *testing.T) {
 	RunTest(t, func(algorithm Algorithm) {
 
 		payload := NewClaim()
-		payload.Set("nbf", fmt.Sprintf("%d", time.Now().Add(1*time.Hour).Unix()))
+		payload.SetTime("nbf", time.Now().Add(time.Duration(1) * time.Hour))
 
 		err := json.Unmarshal([]byte(`{"sub":"1234567890","name":"John Doe","admin":true}`), &payload)
 		if err != nil {

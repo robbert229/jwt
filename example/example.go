@@ -37,7 +37,12 @@ func main() {
 		panic(err)
 	}
 
-	if strings.Compare(role, "Admin") == 0 {
+	roleString, ok := role.(string)
+	if !ok {
+		panic(err)
+	}
+
+	if strings.Compare(roleString, "Admin") == 0 {
 		//user is an admin
 		fmt.Println("User is an admin")
 	}

@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -39,7 +38,7 @@ func (c *Claims) Set(key string, value interface{}) {
 
 // SetTime sets the claim given to the specified time.
 func (c *Claims) SetTime(key string, value time.Time) {
-	c.Set(key, fmt.Sprintf("%d", value.Unix()))
+	c.Set(key, value.Unix())
 }
 
 // Get returns the claim in string form and returns an error if the specified claim doesn't exist.
