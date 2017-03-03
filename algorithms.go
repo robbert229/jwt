@@ -47,7 +47,7 @@ func (a *Algorithm) Sign(unsignedToken string) (string, error) {
 		return "", errors.Wrap(err, "Unable to write to HMAC-SHA256")
 	}
 
-	encodedToken := base64.StdEncoding.EncodeToString(a.sum(nil))
+	encodedToken := base64.RawURLEncoding.EncodeToString(a.sum(nil))
 	a.reset()
 
 	return encodedToken, nil
@@ -62,14 +62,14 @@ func (a *Algorithm) Encode(payload *Claims) (string, error) {
 		return "", errors.Wrap(err, "unable to marshal header")
 	}
 
-	b64TokenHeader := base64.StdEncoding.EncodeToString(jsonTokenHeader)
+	b64TokenHeader := base64.RawURLEncoding.EncodeToString(jsonTokenHeader)
 
 	jsonTokenPayload, err := json.Marshal(payload.claimsMap)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to marshal payload")
 	}
 
-	b64TokenPayload := base64.StdEncoding.EncodeToString(jsonTokenPayload)
+	b64TokenPayload := base64.RawURLEncoding.EncodeToString(jsonTokenPayload)
 
 	unsignedSignature := b64TokenHeader + "." + b64TokenPayload
 
@@ -77,7 +77,7 @@ func (a *Algorithm) Encode(payload *Claims) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "unable to sign token")
 	}
-	b64Signature := base64.StdEncoding.EncodeToString([]byte(signature))
+	b64Signature := base64.RawURLEncoding.EncodeToString([]byte(signature))
 
 	token := b64TokenHeader + "." + b64TokenPayload + "." + b64Signature
 
@@ -91,7 +91,7 @@ func (a *Algorithm) Decode(encoded string) (*Claims, error) {
 	b64Payload := encryptedComponents[1]
 
 	var claims map[string]interface{}
-	payload, err := base64.StdEncoding.DecodeString(b64Payload)
+	payload, err := base64.RawURLEncoding.DecodeString(b64Payload)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to decode base64 payload")
 	}
@@ -140,7 +140,7 @@ func (a *Algorithm) validateSignature(encoded string) error {
 		return errors.Wrap(err, "unable to sign token for validation")
 	}
 
-	b64SignedAttempt := base64.StdEncoding.EncodeToString([]byte(signedAttempt))
+	b64SignedAttempt := base64.RawURLEncoding.EncodeToString([]byte(signedAttempt))
 
 	if strings.Compare(b64Signature, b64SignedAttempt) != 0 {
 		return errors.New("invalid signature")
