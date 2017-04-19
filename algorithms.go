@@ -142,7 +142,7 @@ func (a *Algorithm) validateSignature(encoded string) error {
 
 	b64SignedAttempt := base64.RawURLEncoding.EncodeToString([]byte(signedAttempt))
 
-	if strings.Compare(b64Signature, b64SignedAttempt) != 0 {
+	if !hmac.Equal([]byte(b64Signature), []byte(b64SignedAttempt)) {
 		return errors.New("invalid signature")
 	}
 
