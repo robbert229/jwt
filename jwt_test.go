@@ -108,3 +108,15 @@ func TestVerifyTokenNbf(t *testing.T) {
 		}
 	})
 }
+
+func TestDecodeMalformedToken(t *testing.T) {
+	RunTest(t, func(algorithm Algorithm) {
+		bogusTokens := []string{"", "abc", "czwmS6hE.NZLElvuy"}
+
+		for _, bogusToken := range bogusTokens {
+			if _, err := algorithm.Decode(bogusToken); err == nil {
+				t.Fatalf("no error returned upon decoding malformed token '%s'", bogusToken)
+			}
+		}
+	})
+}
