@@ -87,6 +87,9 @@ func (a *Algorithm) Encode(payload *Claims) (string, error) {
 // Decode returns a map representing the token's claims. DOESN'T validate the claims though.
 func (a *Algorithm) Decode(encoded string) (*Claims, error) {
 	encryptedComponents := strings.Split(encoded, ".")
+	if len(encryptedComponents) != 3 {
+		return nil, errors.New("malformed token")
+	}
 
 	b64Payload := encryptedComponents[1]
 
