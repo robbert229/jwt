@@ -110,24 +110,32 @@ func (a *Algorithm) Decode(encoded string) (*Claims, error) {
 
 // Validate verifies a tokens validity. It returns nil if it is valid, and an error if invalid.
 func (a *Algorithm) Validate(encoded string) error {
-	claims, err := a.Decode(encoded)
+	_, err := a.DecodeAndValidate(encoded)
+	return err
+}
+
+// DecodeAndValidate returns a map representing the token's claims, and it's valid.
+func (a *Algorithm) DecodeAndValidate(encoded string) (claims *Claims, err error) {
+	claims, err = a.Decode(encoded)
 	if err != nil {
-		return err
+		return
 	}
 
-	if err := a.validateSignature(encoded); err != nil {
-		return errors.Wrap(err, "failed to validate signature")
+	if err = a.validateSignature(encoded); err != nil {
+		err = errors.Wrap(err, "failed to validate signature")
+		return
 	}
 
-	if err := a.validateExp(claims); err != nil {
-		return errors.Wrap(err, "failed to validate exp")
+	if err = a.validateExp(claims); err != nil {
+		err = errors.Wrap(err, "failed to validate exp")
+		return
 	}
 
-	if err := a.validateNbf(claims); err != nil {
-		return errors.Wrap(err, "failed to validate nbf")
+	if err = a.validateNbf(claims); err != nil {
+		err = errors.Wrap(err, "failed to validate nbf")
 	}
 
-	return nil
+	return
 }
 
 func (a *Algorithm) validateSignature(encoded string) error {
@@ -151,7 +159,6 @@ func (a *Algorithm) validateSignature(encoded string) error {
 
 	return nil
 }
-
 
 func (a *Algorithm) validateExp(claims *Claims) error {
 	if claims.HasClaim("exp") {
