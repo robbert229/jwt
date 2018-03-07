@@ -41,13 +41,13 @@ func (a *Algorithm) write(data []byte) (int, error) {
 }
 
 // Sign signs the token with the given hash, and key
-func (a *Algorithm) Sign(unsignedToken string) (string, error) {
+func (a *Algorithm) Sign(unsignedToken string) ([]byte, error) {
 	_, err := a.write([]byte(unsignedToken))
 	if err != nil {
-		return "", errors.Wrap(err, "Unable to write to HMAC-SHA256")
+		return nil, errors.Wrap(err, "Unable to write to HMAC-SHA256")
 	}
 
-	encodedToken := base64.RawURLEncoding.EncodeToString(a.sum(nil))
+	encodedToken := a.sum(nil)
 	a.reset()
 
 	return encodedToken, nil
