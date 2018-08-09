@@ -25,7 +25,7 @@ The first step is to pick a signing method. For demonstration purposes we will c
 Now we need to the claims, and edit some values
 
     claims := jwt.NewClaim()
-    claims.Set("Role", "Admin)
+    claims.Set("Role", "Admin")
     
 Then we will need to sign it!
 
