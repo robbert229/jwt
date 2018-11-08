@@ -51,6 +51,11 @@ func (c Claims) Get(key string) (interface{}, error) {
 	return result, nil
 }
 
+// Get all claims as a string map.
+func (c Claims) GetClaims() map[string]interface{} {
+	return c.claimsMap
+}
+
 // GetTime attempts to return a claim as a time.
 func (c *Claims) GetTime(key string) (time.Time, error) {
 	raw, err := c.Get(key)
