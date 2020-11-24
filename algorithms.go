@@ -7,11 +7,12 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"hash"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 //Algorithm is used to sign and validate a token.
@@ -44,7 +45,7 @@ func (a *Algorithm) write(data []byte) (int, error) {
 func (a *Algorithm) Sign(unsignedToken string) ([]byte, error) {
 	_, err := a.write([]byte(unsignedToken))
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to write to HMAC-SHA256")
+		return nil, fmt.Errorf("Unable to write to HMAC-SHA256: %w", err)
 	}
 
 	encodedToken := a.sum(nil)
@@ -59,14 +60,14 @@ func (a *Algorithm) Encode(payload *Claims) (string, error) {
 
 	jsonTokenHeader, err := json.Marshal(header)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to marshal header")
+		return "", fmt.Errorf("unable to marshal header: %w", err)
 	}
 
 	b64TokenHeader := base64.RawURLEncoding.EncodeToString(jsonTokenHeader)
 
 	jsonTokenPayload, err := json.Marshal(payload.claimsMap)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to marshal payload")
+		return "", fmt.Errorf("unable to marshal payload: %w", err)
 	}
 
 	b64TokenPayload := base64.RawURLEncoding.EncodeToString(jsonTokenPayload)
@@ -75,7 +76,7 @@ func (a *Algorithm) Encode(payload *Claims) (string, error) {
 
 	signature, err := a.Sign(unsignedSignature)
 	if err != nil {
-		return "", errors.Wrap(err, "unable to sign token")
+		return "", fmt.Errorf("unable to sign token: %w", err)
 	}
 	b64Signature := base64.RawURLEncoding.EncodeToString([]byte(signature))
 
@@ -96,11 +97,11 @@ func (a *Algorithm) Decode(encoded string) (*Claims, error) {
 	var claims map[string]interface{}
 	payload, err := base64.RawURLEncoding.DecodeString(b64Payload)
 	if err != nil {
-		return nil, errors.Wrap(err, "unable to decode base64 payload")
+		return nil, fmt.Errorf("unable to decode base64 payload: %w", err)
 	}
 
 	if err := json.Unmarshal(payload, &claims); err != nil {
-		return nil, errors.Wrap(err, "unable to unmarshal payload json")
+		return nil, fmt.Errorf("unable to unmarshal payload json: %w", err)
 	}
 
 	return &Claims{
@@ -122,17 +123,17 @@ func (a *Algorithm) DecodeAndValidate(encoded string) (claims *Claims, err error
 	}
 
 	if err = a.validateSignature(encoded); err != nil {
-		err = errors.Wrap(err, "failed to validate signature")
+		err = fmt.Errorf("failed to validate signature: %w", err)
 		return
 	}
 
 	if err = a.validateExp(claims); err != nil {
-		err = errors.Wrap(err, "failed to validate exp")
+		err = fmt.Errorf("failed to validate exp: %w", err)
 		return
 	}
 
 	if err = a.validateNbf(claims); err != nil {
-		err = errors.Wrap(err, "failed to validate nbf")
+		err = fmt.Errorf("failed to validate nbf: %w", err)
 	}
 
 	return
@@ -148,7 +149,7 @@ func (a *Algorithm) validateSignature(encoded string) error {
 	unsignedAttempt := b64Header + "." + b64Payload
 	signedAttempt, err := a.Sign(unsignedAttempt)
 	if err != nil {
-		return errors.Wrap(err, "unable to sign token for validation")
+		return fmt.Errorf("unable to sign token for validation: %w", err)
 	}
 
 	b64SignedAttempt := base64.RawURLEncoding.EncodeToString([]byte(signedAttempt))
