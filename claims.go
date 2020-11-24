@@ -1,9 +1,8 @@
 package jwt
 
 import (
+	"fmt"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // Claims contains the claims of a jwt.
@@ -45,7 +44,7 @@ func (c *Claims) SetTime(key string, value time.Time) {
 func (c Claims) Get(key string) (interface{}, error) {
 	result, ok := c.claimsMap[key]
 	if !ok {
-		return "", errors.Errorf("claim (%s) doesn't exist", key)
+		return "", fmt.Errorf("claim (%s) doesn't exist", key)
 	}
 
 	return result, nil
@@ -55,12 +54,12 @@ func (c Claims) Get(key string) (interface{}, error) {
 func (c *Claims) GetTime(key string) (time.Time, error) {
 	raw, err := c.Get(key)
 	if err != nil {
-		return time.Unix(0, 0), errors.Wrapf(err, "claim (%s) doesn't exist", key)
+		return time.Unix(0, 0), fmt.Errorf("claim (%s) doesn't exist: %w", key, err)
 	}
 
 	timeFloat, ok := raw.(float64)
 	if !ok {
-		return time.Unix(0, 0), errors.Wrap(err, "claim isn't a valid float")
+		return time.Unix(0, 0), fmt.Errorf("claim isn't a valid float: %w", err)
 	}
 
 	return time.Unix(int64(timeFloat), 0), nil
